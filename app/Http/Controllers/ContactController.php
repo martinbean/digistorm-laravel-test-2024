@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Contacts\StoreContactRequest;
 use App\Models\Contact;
 use App\Models\PhoneNumber;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Application;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class ContactController extends Controller
 {
@@ -20,7 +23,7 @@ class ContactController extends Controller
         return view('contacts.index', compact('contacts'));
     }
 
-    public function create(): View|Application|Factory|\Illuminate\Contracts\Foundation\Application
+    public function create(): View
     {
         return view('contacts.create');
     }
@@ -28,16 +31,21 @@ class ContactController extends Controller
     /**
      * @throws \Throwable
      */
-    public function store(Request $request): Response
+    public function store(StoreContactRequest $request): RedirectResponse
     {
-        $contact = new Contact();
-        $contact->fill($request->all());
-        $contact->save();
-        foreach ($request->number as $number) {
-            PhoneNumber::create(['number' => $number, 'contact_id' => $contact->id]);
-        }
+        $contact = DB::transaction(function () use ($request): Contact {
+            $contact = Contact::query()->create($request->safe()->except('number'));
 
-        return view('contacts.show', compact('contact'));
+            foreach (array_filter($request->input('number', default: [])) as $number) {
+                $contact->phoneNumbers()->create([
+                    'number' => $number,
+                ]);
+            }
+
+            return $contact;
+        });
+
+        return redirect()->route('contacts.show', compact('contact'));
     }
 
     public function show(Contact $contact): View|Application|Factory|\Illuminate\Contracts\Foundation\Application

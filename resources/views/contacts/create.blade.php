@@ -48,7 +48,7 @@
                 <div class="row">
                     <div class="col-auto">
                         <label class="form-label">Date of Birth
-                            <input type="text" name="DOB"/>
+                            <input type="date" name="DOB"/>
                         </label>
                     </div>
                 </div>
