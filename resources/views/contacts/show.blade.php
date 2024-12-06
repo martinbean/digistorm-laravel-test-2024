@@ -1,46 +1,42 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container">
-        <div class="row">
-            <h1 class="mr-3">{{ $contact->full_name }}</h1>
-            <a href="{{ route('contacts.edit', ['contact' => $contact]) }}" class="btn btn-info">Edit</a>
-            <form method="POST" action="{{ route('contacts.destroy', ['contact' => $contact]) }}">
+    <x-page-header>
+        <x-slot:title>{{ $contact->full_name }}</x-slot:title>
+        <x-slot:actions>
+            <a class="btn btn-primary" href="{{ route('contacts.edit', ['contact' => $contact]) }}" class="btn btn-info">{{ __('Edit') }}</a>
+            <form action="{{ route('contacts.destroy', ['contact' => $contact]) }}" class="inline-block" method="post">
                 @csrf
                 @method('delete')
-                <button type="submit" class="btn btn-danger">Delete</a>
+                <button class="btn btn-danger" type="submit">{{ __('Delete') }}</a>
             </form>
-        </div>
-        <div class="row">
-            <h3>Details</h3>
-        </div>
-        <div class="row mb-3">
-            <div class="card-body bg-white rounded shadow-sm">
-                <h6 class="card-subtitle mb-2 text-muted">
-                    {{ $contact->company_name }} &ndash; {{ $contact->position }}
-                </h6>
-                <p class="card-text">
-                    @if(isset($contact->email))
-                        {{ $contact->email }}<br>
-                    @endif
-                </p>
+        </x-slot:actions>
+    </x-page-header>
+    <section class="mb-4" id="details">
+        <h2 class="font-bold mb-2 text-base">{{ __('Details') }}</h2>
+        <div class="bg-white flex flex-col h-full rounded shadow">
+            <div class="flex flex-col gap-1 p-4">
+                <h3 class="font-medium">
+                    <span>{{ $contact->company_name }}</span>
+                    <span aria-hidden="true">&ndash;</span>
+                    <span>{{ $contact->position }}</span>
+                </h3>
+                @if(isset($contact->email))
+                    <p>{{ $contact->email }}</p>
+                @endif
             </div>
         </div>
-        <div class="row">
-            @if ($contact->phoneNumbers->count() == 1)
-                <h3>Phone Number</h3>
-            @else
-                <h3>Phone Numbers</h3>
-            @endif
-        </div>
-        <div class="row">
-            <div class="card-body bg-white rounded shadow-sm">
-                <p class="card-text">
+    </section>
+    <section id="phone-numbers">
+        <h2 class="font-bold mb-2 text-base">{{ $contact->phoneNumbers->count() === 1 ? __('Phone number') : __('Phone numbers') }}</h2>
+        <div class="bg-white flex flex-col h-full rounded shadow">
+            <div class="flex flex-col grow p-4">
+                <p>
                     @foreach($contact->phoneNumbers as $phoneNumber)
-                        {{ $phoneNumber->number }}
+                        <span class="block">{{ $phoneNumber->number }}</span>
                     @endforeach
                 </p>
             </div>
         </div>
-    </div>
+    </section>
 @endsection

@@ -19,7 +19,7 @@ class UpdateContactRequest extends FormRequest
             'DOB' => ['nullable', 'string', 'date_format:Y-m-d'],
             'company_name' => ['required', 'string', 'max:100'],
             'position' => ['required', 'string', 'max:100'],
-            'email' => ['filled', 'string', 'max:255', 'email'],
+            'email' => ['nullable', 'string', 'max:255', 'email'],
             'number' => ['required', 'array', 'min:1'],
             'number.*' => ['string', 'max:15', 'distinct'],
         ];

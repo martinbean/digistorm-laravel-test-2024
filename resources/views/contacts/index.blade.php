@@ -1,52 +1,57 @@
 @extends('layouts.app')
 
-@section('content')
-    <div class="flex">
-        <div class="mb-3">
-            <div class="col-10">
-                <h1 class="text-3xl font-bold">Contacts</h1>
-            </div>
-            <div class="col-2">
-                <a href="{{ route('contacts.create') }}" class="btn btn-primary">Add Contact</a>
-            </div>
-        </div>
-        @foreach($contacts as $contact)
-            <div class="row pb-3">
-                <div class="card w-100">
-                    <div class="card-body">
-                        <a href="{{ route('contacts.show', ['contact' => $contact]) }}">
-                            <h5 class="card-title">{{ $contact->full_name }}</h5>
-                        </a>
-                        <h6 class="card-subtitle mb-2 text-muted">
-                            {{ $contact->company_name }} &ndash; {{ $contact->position }}
-                        </h6>
-                        <p class="card-text">
-                            @if(isset($contact->email))
-                                {{ $contact->email }}<br>
-                            @endif
+@section('title', __('Contacts'))
 
-                            @foreach($contact->phoneNumbers as $phoneNumber)
-                                {{ $phoneNumber->number }}
-                            @endforeach
-                        </p>
+@section('content')
+    <div class="flex flex-col">
+        <x-page-header>
+            <x-slot:title>{{ __('Contacts') }}</x-slot:title>
+            <x-slot:actions>
+                <a href="{{ route('contacts.create') }}" class="btn btn-primary">{{ __('Add contact') }}</a>
+            </x-slot:actions>
+        </x-page-header>
+        <ul class="gap-4 grid grid-cols-4">
+            @foreach($contacts as $contact)
+                <li>
+                    <div class="bg-white flex flex-col h-full rounded shadow">
+                        <div class="flex flex-col grow p-4">
+                            <div class="grow">
+                                <div class="mb-2">
+                                    <h2 class="m-0">
+                                        <a class="font-medium" href="{{ route('contacts.show', compact('contact')) }}">{{ $contact->full_name }}</a>
+                                    </h2>
+                                    <p class="m-0 text-sm">{{ $contact->company_name }} &ndash; {{ $contact->position }}</p>
+                                </div>
+                                <p class="mb-3 text-sm">
+                                    @if(isset($contact->email))
+                                        <span class="block">{{ $contact->email }}</span>
+                                    @endif
+                                    @foreach($contact->phoneNumbers as $phoneNumber)
+                                        <span class="block">{{ $phoneNumber->number }}</span>
+                                    @endforeach
+                                </p>
+                            </div>
+                            <ul class="flex gap-3 m-0 text-sm">
+                                <li class="inline-flex">
+                                    <a class="font-medium text-sky-500 hover:text-sky-600 hover:underline" href="{{ route('contacts.edit', compact('contact')) }}" class="btn btn-info">Edit</a>
+                                </li>
+                                <li class="inline-flex">
+                                    <form action="{{ route('contacts.destroy', compact('contact')) }}" class="inline-block" method="post">
+                                        @csrf
+                                        @method('delete')
+                                        <button type="submit" class="font-medium text-red-600 hover:text-red-700 hover:underline">Delete</a>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
-                    <div class="border-top  p-4">
-                        <span class="float-start">
-                            <a href="{{ route('contacts.edit', ['contact' => $contact]) }}" class="btn btn-info">Edit</a>
-                        </span>
-                        <span class="float-end">
-                            <form method="POST" action="{{ route('contacts.destroy', ['contact' => $contact]) }}">
-                                @csrf
-                                @method('delete')
-                                <button type="submit" class="btn btn-danger">Delete</a>
-                            </form>
-                        </span>
-                    </div>
-                </div>
+                </li>
+            @endforeach
+        </ul>
+        @if($contacts->hasPages())
+            <div class="mt-4 row">
+                {{ $contacts->withQueryString()->links() }}
             </div>
-        @endforeach
-        <div class="row">
-            {{ $contacts->links() }}
-        </div>
+        @endif
     </div>
 @endsection
