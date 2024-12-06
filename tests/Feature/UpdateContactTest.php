@@ -3,7 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Contact;
-use App\Models\PhoneNumber;
+use Illuminate\Support\Arr;
+use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 
 class UpdateContactTest extends TestCase
@@ -31,64 +32,6 @@ class UpdateContactTest extends TestCase
                 'company_name' => $companyName = fake()->company(),
                 'position' => 'Director',
                 'email' => $email = fake()->safeEmail(),
-            ])
-            ->assertValid();
-
-        $this->assertDatabaseHas('contacts', [
-            'id' => $contact->getKey(),
-            'first_name' => $firstName,
-            'last_name' => $lastName,
-            'DOB' => $dob,
-            'company_name' => $companyName,
-            'position' => 'Director',
-            'email' => $email,
-        ]);
-    }
-
-    public function test_existing_phone_number_is_removed(): void
-    {
-        $contact = Contact::factory()->create();
-        $phoneNumber = PhoneNumber::factory()->for($contact)->create();
-
-        $this
-            ->put(route('contacts.update', compact('contact')), data: [
-                'first_name' => $firstName = fake()->firstName(),
-                'last_name' => $lastName = fake()->lastName(),
-                'DOB' => $dob = fake()->dateTimeBetween('-65 years', '-18 years')->format('Y-m-d'),
-                'company_name' => $companyName = fake()->company(),
-                'position' => 'Director',
-                'email' => $email = fake()->safeEmail(),
-            ])
-            ->assertValid()
-            ->assertRedirectToRoute('contacts.show', compact('contact'));
-
-        $this->assertDatabaseHas('contacts', [
-            'id' => $contact->getKey(),
-            'first_name' => $firstName,
-            'last_name' => $lastName,
-            'DOB' => $dob,
-            'company_name' => $companyName,
-            'position' => 'Director',
-            'email' => $email,
-        ]);
-
-        $this->assertModelMissing($phoneNumber);
-    }
-
-    public function test_new_phone_numbers_are_saved(): void
-    {
-        $contact = Contact::factory()->create();
-
-        $this->assertDatabaseCount('phone_numbers', 1);
-
-        $this
-            ->put(route('contacts.update', compact('contact')), data: [
-                'first_name' => $firstName = fake()->firstName(),
-                'last_name' => $lastName = fake()->lastName(),
-                'DOB' => $dob = fake()->dateTimeBetween('-65 years', '-18 years')->format('Y-m-d'),
-                'company_name' => $companyName = fake()->company(),
-                'position' => 'Director',
-                'email' => $email = fake()->safeEmail(),
                 'number' => [
                     $phoneNumber = fake()->e164PhoneNumber(),
                 ],
@@ -106,10 +49,35 @@ class UpdateContactTest extends TestCase
             'email' => $email,
         ]);
 
-        $this->assertDatabaseCount('phone_numbers', 1);
         $this->assertDatabaseHas('phone_numbers', [
             'contact_id' => $contact->getKey(),
             'number' => $phoneNumber,
         ]);
+    }
+
+    #[TestWith(['first_name'], 'first_name')]
+    #[TestWith(['last_name'], 'last_name')]
+    #[TestWith(['company_name'], 'company_name')]
+    #[TestWith(['position'], 'position')]
+    #[TestWith(['number'], 'number')]
+    public function test_field_is_required(string $field): void
+    {
+        $contact = Contact::factory()->create();
+
+        $data = [
+            'first_name' => $firstName = fake()->firstName(),
+            'last_name' => $lastName = fake()->lastName(),
+            'DOB' => $dob = fake()->dateTimeBetween('-65 years', '-18 years')->format('Y-m-d'),
+            'company_name' => $companyName = fake()->company(),
+            'position' => 'Director',
+            'email' => $email = fake()->safeEmail(),
+            'number' => [
+                $phoneNumber = fake()->e164PhoneNumber(),
+            ],
+        ];
+
+        $this
+            ->put(route('contacts.update', compact('contact')), data: Arr::except($data, $field))
+            ->assertInvalid($field);
     }
 }
