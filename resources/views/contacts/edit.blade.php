@@ -27,7 +27,7 @@
                 </div>
             </div>
         </div>
-        
+
         <form method="POST" action="{{ route('contacts.update', ['contact' => $contact]) }}">
             @csrf
             @method('put')

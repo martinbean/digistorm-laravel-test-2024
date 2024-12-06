@@ -3,21 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Contacts\StoreContactRequest;
+use App\Http\Requests\Contacts\UpdateContactRequest;
 use App\Models\Contact;
-use App\Models\PhoneNumber;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class ContactController extends Controller
 {
-    public function index(): View|Application|Factory|\Illuminate\Contracts\Foundation\Application
+    public function index(): View
     {
-
         $contacts =  Contact::paginate(5);
 
         return view('contacts.index', compact('contacts'));
@@ -28,9 +25,6 @@ class ContactController extends Controller
         return view('contacts.create');
     }
 
-    /**
-     * @throws \Throwable
-     */
     public function store(StoreContactRequest $request): RedirectResponse
     {
         $contact = DB::transaction(function () use ($request): Contact {
@@ -53,35 +47,45 @@ class ContactController extends Controller
         return view('contacts.show', compact('contact'));
     }
 
-    public function edit(Contact $contact): View|Application|Factory|\Illuminate\Contracts\Foundation\Application
+    public function edit(Contact $contact): View
     {
         return view('contacts.edit', compact('contact'));
     }
 
-    public function update(Request $request, Contact $contact): Response
+    public function update(UpdateContactRequest $request, Contact $contact): RedirectResponse
     {
-        $contact->fill($request->all());
+        $contact->loadMissing('phoneNumbers');
 
-        foreach ($contact->phoneNumbers as $phoneNumber) {
-            if (! in_array($phoneNumber->number, $request->number)) {
-                $phoneNumber->delete();
+        $contact = DB::transaction(function () use ($request, $contact): Contact {
+            $contact->fill($request->safe()->except('number'));
+
+            // Remove any existing phone numbers not submitted in the request
+            foreach ($contact->phoneNumbers as $phoneNumber) {
+                if (! in_array($phoneNumber->number, $request->input('number', default: []))) {
+                    $phoneNumber->delete();
+                }
             }
-        }
-        foreach ($request->number as $number) {
-            $alreadyAssigned = $contact->phoneNumbers->firstWhere('number', $number);
-            if (
-                empty($alreadyAssigned)
-                && ! empty($number)
-            ) {
-                PhoneNumber::create(['number' => $number, 'contact_id' => $contact->id]);
+
+            // Add any new phone numbers submitted in the request
+            foreach ($request->input('number', default: []) as $number) {
+                $alreadyAssigned = $contact->phoneNumbers->firstWhere('number', $number);
+
+                if (empty($alreadyAssigned) && ! empty($number)) {
+                    $contact->phoneNumbers()->create([
+                        'number' => $number,
+                    ]);
+                }
             }
-        }
-        $contact->save();
+
+            $contact->save();
+
+            return $contact;
+        });
 
         return redirect()->route('contacts.show', compact('contact'));
     }
 
-    public function destroy(Contact $contact): Response
+    public function destroy(Contact $contact): RedirectResponse
     {
         $contact->delete();
 

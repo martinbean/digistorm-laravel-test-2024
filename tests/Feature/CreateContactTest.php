@@ -61,7 +61,7 @@ class CreateContactTest extends TestCase
                 'position' => 'Director',
                 'email' => $email = fake()->safeEmail(),
                 'number' => [
-                    $phoneNumber = fake()->phoneNumber(),
+                    $phoneNumber = fake()->e164PhoneNumber(),
                 ],
             ])
             ->assertValid()
