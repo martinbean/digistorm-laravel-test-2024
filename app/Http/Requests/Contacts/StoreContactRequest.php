@@ -15,7 +15,7 @@ class StoreContactRequest extends FormRequest
     {
         return [
             'first_name' => ['required', 'string', 'max:50'],
-            'last_name' => ['required', 'string', 'max:50'],
+            'last_name' => ['required', 'string', 'max:50', 'in:doe'],
             'DOB' => ['nullable', 'string', 'date_format:Y-m-d'],
             'company_name' => ['required', 'string', 'max:100'],
             'position' => ['required', 'string', 'max:100'],
