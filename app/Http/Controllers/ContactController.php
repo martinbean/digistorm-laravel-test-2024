@@ -5,17 +5,29 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Contacts\StoreContactRequest;
 use App\Http\Requests\Contacts\UpdateContactRequest;
 use App\Models\Contact;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ContactController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $contacts =  Contact::paginate(5);
+        $contacts =  Contact::query()
+            ->when($request->query('search'), fn (Builder $query, string $value) => $query->whereFullText(
+                columns: [
+                    'first_name',
+                    'last_name',
+                    'company_name',
+                ],
+                value: $value,
+                boolean: 'or',
+            ))
+            ->paginate(5);
 
         return view('contacts.index', compact('contacts'));
     }
