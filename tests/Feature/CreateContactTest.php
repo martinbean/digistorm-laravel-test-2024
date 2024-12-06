@@ -17,7 +17,7 @@ class CreateContactTest extends TestCase
             ->assertViewIs('contacts.create');
     }
 
-    public function test_can_create_contact_with_phone_number(): void
+    public function test_can_create_contact_with_one_phone_number(): void
     {
         $this->assertDatabaseEmpty('contacts');
         $this->assertDatabaseEmpty('phone_numbers');
@@ -51,6 +51,49 @@ class CreateContactTest extends TestCase
         $this->assertDatabaseHas('phone_numbers', [
             'contact_id' => $contact->getKey(),
             'number' => $phoneNumber,
+        ]);
+    }
+
+    public function test_can_create_contact_with_multiple_phone_numbers(): void
+    {
+        $this->assertDatabaseEmpty('contacts');
+        $this->assertDatabaseEmpty('phone_numbers');
+
+        $this
+            ->post('/contacts', [
+                'first_name' => $firstName = fake()->firstName(),
+                'last_name' => $lastName = fake()->lastName(),
+                'DOB' => $dob = fake()->dateTimeBetween('-65 years', '-18 years')->format('Y-m-d'),
+                'company_name' => $companyName = fake()->company(),
+                'position' => 'Director',
+                'email' => $email = fake()->safeEmail(),
+                'number' => [
+                    $phoneNumber1 = fake()->e164PhoneNumber(),
+                    $phoneNumber2 = fake()->e164PhoneNumber(),
+                ],
+            ])
+            ->assertValid()
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('contacts', [
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'DOB' => $dob,
+            'company_name' => $companyName,
+            'position' => 'Director',
+            'email' => $email,
+        ]);
+
+        $contact = Contact::query()->latest()->firstOr(fn () => $this->fail('Contact not found.'));
+
+        $this->assertDatabaseHas('phone_numbers', [
+            'contact_id' => $contact->getKey(),
+            'number' => $phoneNumber1,
+        ]);
+
+        $this->assertDatabaseHas('phone_numbers', [
+            'contact_id' => $contact->getKey(),
+            'number' => $phoneNumber2,
         ]);
     }
 

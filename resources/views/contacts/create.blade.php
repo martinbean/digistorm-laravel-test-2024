@@ -53,18 +53,7 @@
                         </label>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-auto">
-                        <label class="form-label">Phone Number
-                            <input name="number[]" required type="tel" value="{{ old('number.0') }}">
-                        </label>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-auto">
-                        <button type="submit" class="btn btn-primary">Add</button>
-                    </div>
-                </div>
+                <x-phone-numbers-input :value="old('number', [])" />
             </div>
         </form>
     </div>

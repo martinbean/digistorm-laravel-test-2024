@@ -51,25 +51,11 @@
                     </label>
                 </div>
             </div>
-            @foreach($contact->phoneNumbers as $index => $phoneNumber)
-                <div class="row">
-                    <label class="form-label">Phone Number
-                        <input type="text" name="number[]" value="{{ old(sprintf('number.%d', $index), $phoneNumber->number) }}"/>
-                    </label>
-                </div>
-            @endforeach
-            {{-- Blank field outside the loop to allow new number. Refactor later to add multiple at a time. --}}
+            <x-phone-numbers-input :value="old('number', $contact->phoneNumbers->pluck('number')->toArray())" />
             <div class="row">
                 <div class="col-auto">
-                    <label class="form-label">Phone Number
-                        <input type="text" name="number[]"/>
-                    </label>
+                    <button type="submit" class="btn btn-primary">Update</button>
                 </div>
-            </div>
-           <div class="row">
-               <div class="col-auto">
-                   <button type="submit" class="btn btn-primary">Update</button>
-               </div>
            </div>
         </form>
     </div>
